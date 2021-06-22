@@ -1,16 +1,35 @@
-from skimage.color import rgb2gray
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-from scipy import ndimage
-from sklearn.cluster import KMeans
 
-pic = plt.imread('2.jpg')/255  # dividing by 255 to bring the pixel values between 0 and 1
-pic_n = pic.reshape(pic.shape[0]*pic.shape[1], pic.shape[2])
-print(pic_n.shape)
-kmeans = KMeans(n_clusters=5, random_state=0).fit(pic_n)
-pic2show = kmeans.cluster_centers_[kmeans.labels_]
-cluster_pic = pic2show.reshape(pic.shape[0], pic.shape[1], pic.shape[2])
-plt.imshow(cluster_pic)
+
+image = cv2.pow((cv2.imread('dataset/4.jpg')/255.0), 1)
+
+pixel_values = image.reshape((-1, 3))
+pixel_values = np.float32(pixel_values)
+print(pixel_values.shape)
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
+k = 5
+_, labels, (centers) = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+centers = np.uint8(centers)
+labels = labels.flatten()
+masked_image = np.copy(image)
+
+# convert to the shape of a vector of pixel values
+masked_image = masked_image.reshape((-1, 3))
+
+for i in range(5):
+    highest = masked_image[labels == i][0]
+    masked_image[labels == i] = highest
+
+
+
+masked_image = masked_image.reshape(image.shape)
+
+f, axarr = plt.subplots(1,3)
+
+axarr[0].imshow(image)
+axarr[1].imshow(masked_image)
+axarr[2].imshow(masked_image)
 
 plt.show()
