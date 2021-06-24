@@ -1,35 +1,55 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-
-
-image = cv2.pow((cv2.imread('dataset/4.jpg')/255.0), 1)
-
-pixel_values = image.reshape((-1, 3))
-pixel_values = np.float32(pixel_values)
-print(pixel_values.shape)
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
-k = 5
-_, labels, (centers) = cv2.kmeans(pixel_values, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-centers = np.uint8(centers)
-labels = labels.flatten()
-masked_image = np.copy(image)
-
-# convert to the shape of a vector of pixel values
-masked_image = masked_image.reshape((-1, 3))
-
-for i in range(5):
-    highest = masked_image[labels == i][0]
-    masked_image[labels == i] = highest
+import os
 
 
 
-masked_image = masked_image.reshape(image.shape)
+def main():
+    while(1):
+        path, dirs, files = next(os.walk("dataset"))
+        file_count = len(files)
+        val = input("Please choose a satellite image(1,"+str(file_count)+"): ")
+        currentImage = 'dataset/'+val+'.jpg'
+        if (not val.isnumeric() or int(val) == 0 or int(val) > file_count):
+            print("Thank you for using this program")
+            break;
+        image = cv2.pow((cv2.imread(currentImage)/255.0),1)
+        pixel_values = image.reshape((-1, 3))
+        pixel_values = np.float32(pixel_values)
+        k = 6
+        _, labels, (centers) = cv2.kmeans(pixel_values, k, None, (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2), 10, cv2.KMEANS_RANDOM_CENTERS)
+        centers = np.uint8(centers)
+        labels = labels.flatten()
+        table = imagecopyreshape(image)
+        colorandshow(image, table, labels)
 
-f, axarr = plt.subplots(1,3)
 
-axarr[0].imshow(image)
-axarr[1].imshow(masked_image)
-axarr[2].imshow(masked_image)
+def imagecopyreshape(image):
+    masked_image = []
+    for i in range(5):
+        masked_image.insert(i, np.copy(image));
+        masked_image[i] = masked_image[i].reshape((-1, 3))
+    return masked_image
 
-plt.show()
+def colorandshow(image, masked_image, labels):
+    f, axarr = plt.subplots(1, 6)
+    axarr[0].imshow(image)
+    for i in range(5):
+        for j in range(6):
+            if (i == j):
+                masked_image[i][labels == j] = [1,1,1]
+            else:
+                masked_image[i][labels == j] = [0,0,0]
+        masked_image[i] = masked_image[i].reshape(image.shape)
+        axarr[i+1].imshow(masked_image[i])
+    plt.show()
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    main()
